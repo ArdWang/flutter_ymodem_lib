@@ -196,3 +196,7 @@ flutter run
 
 MIT，见 [LICENSE](LICENSE)。协议逻辑移植自 ArdWang 的
 [YModemlib_Android](https://github.com/ArdWang/YModemlib_Android)。
+
+## 更新日志
+
+[CHANGELOG.md](CHANGELOG.md)（[中文版 changelog_cn.md](changelog_cn.md)）
