@@ -22,8 +22,8 @@
 /// ```
 library flutter_ymodem_lib;
 
-export 'src/crc16.dart';
-export 'src/flutter_ymodem_plugin.dart';
-export 'src/ymodem.dart';
-export 'src/ymodem_packet.dart';
-export 'src/ymodem_source.dart';
+export 'package:flutter_ymodem_lib/src/crc16.dart';
+export 'package:flutter_ymodem_lib/src/flutter_ymodem_plugin.dart';
+export 'package:flutter_ymodem_lib/src/ymodem.dart';
+export 'package:flutter_ymodem_lib/src/ymodem_packet.dart';
+export 'package:flutter_ymodem_lib/src/ymodem_source.dart';

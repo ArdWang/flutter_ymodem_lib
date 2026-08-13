@@ -30,15 +30,24 @@ class Crc16 {
   }
 
   /// Calculates the CRC-16 of [block].
-  static int calc(List<int> block) {
+  ///
+  /// Set [trailingZeroBytes] to 2 to replicate the CRC variant used by the
+  /// iOS library `YModemlib_iOS` (`Cccal_CRC16`), which processes two extra
+  /// zero bytes after the payload. Some devices' bootloader firmware expects
+  /// that variant; the standard (XModem) CRC is used when it is 0.
+  static int calc(List<int> block, {int trailingZeroBytes = 0}) {
     var crc = 0x0000;
     for (var i = 0; i < block.length; i++) {
       final b = block[i] & 0xFF;
       crc = ((crc << 8) ^ _table[((crc >> 8) ^ b) & 0xFF]) & 0xFFFF;
     }
+    for (var i = 0; i < trailingZeroBytes; i++) {
+      crc = ((crc << 8) ^ _table[(crc >> 8) & 0xFF]) & 0xFFFF;
+    }
     return crc;
   }
 
   /// Calculates the CRC-16 of [data] (convenience overload).
-  static int calcUint8(Uint8List data) => calc(data);
+  static int calcUint8(Uint8List data, {int trailingZeroBytes = 0}) =>
+      calc(data, trailingZeroBytes: trailingZeroBytes);
 }

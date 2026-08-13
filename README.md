@@ -30,7 +30,10 @@ with old Flutter versions.
   - data packages with 128 (SOH) or 1024 (STX) byte blocks,
   - EOT / final empty package handshake,
   - `MD5_OK` / `MD5_ERR` final response support.
-- CRC-16/XMODEM (CCITT, poly `0x1021`, big-endian in the frame).
+- CRC-16/XMODEM (CCITT, poly `0x1021`, big-endian in the frame), plus an
+  optional `crcTrailingZeros: 2` variant compatible with the iOS library
+  [YModemlib_iOS](https://github.com/QuickDevelopers/YModemLib)
+  (`Cccal_CRC16`), required by the bootloader firmware of some devices.
 - Automatic retransmission on `NAK` / timeout (up to 6 times by default,
   configurable), `CAN` cancellation handling, `stop()` support.
 - Handles responses split over several BLE notifications
@@ -46,7 +49,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_ymodem_lib: ^0.0.1
+  flutter_ymodem_lib: ^0.0.2
 ```
 
 ### Minimal usage
@@ -150,6 +153,7 @@ SOH 00 FF NUL[128] CRC CRC          >>>>>>>>>>>>>>>>>>>>>>
 | `onDataReady` | required | Called with every package ready to send |
 | `fileMd5` | `''` | Optional MD5, appended to package 0 |
 | `sendSize` | `1024` | Data block size: `128` (SOH) or `1024` (STX) |
+| `crcTrailingZeros` | `0` | `0` = standard CRC-16/XMODEM (Android library); `2` = `YModemlib_iOS` CRC variant |
 | `maxRetryTimes` | `6` | Max resends of one package before aborting |
 | `packageTimeout` | `6 s` | Time to wait for the receiver's response |
 | `responseSettleDelay` | `200 ms` | Extra wait for split responses (`ACK`+`C`, `MD5_OK`) |
@@ -220,6 +224,8 @@ OTA workflow:
 - **Receiver answers nothing / timeouts**: check that the notifications are
   enabled on the RX characteristic (`setNotifyValue(true)`) and that every
   received notification is fed into `ymodem.onReceiveData()`.
+- **Receiver keeps NAKing every package**: the CRC variant of your device
+  may differ — try `crcTrailingZeros: 2` (the `YModemlib_iOS` variant).
 - **CRC errors on the receiver**: lower the throughput — increase
   `chunkDelay` (e.g. 15–20 ms) or use `sendSize: 128`.
 - **`ACK` + `C` arrive as two notifications**: handled by the engine via

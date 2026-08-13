@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'ymodem_packet.dart';
-import 'ymodem_source.dart';
+import 'package:flutter_ymodem_lib/src/ymodem_packet.dart';
+import 'package:flutter_ymodem_lib/src/ymodem_source.dart';
 
 /// Called when a complete YModem package has been encapsulated and is ready
 /// to be sent to the receiver (e.g. written to a BLE characteristic).
@@ -82,6 +82,7 @@ class YModem {
     required this.onDataReady,
     this.fileMd5 = '',
     this.sendSize = 1024,
+    this.crcTrailingZeros = 0,
     this.maxRetryTimes = 6,
     this.packageTimeout = const Duration(seconds: 6),
     this.responseSettleDelay = const Duration(milliseconds: 200),
@@ -111,6 +112,15 @@ class YModem {
 
   /// Data block size of every data package: 128 (SOH) or 1024 (STX).
   final int sendSize;
+
+  /// Number of extra zero bytes processed by the CRC-16 after each payload.
+  ///
+  /// * `0` (default): standard CRC-16/XMODEM, as used by the Android
+  ///   reference library `YModemlib_Android`.
+  /// * `2`: the CRC variant of the iOS library `YModemlib_iOS`
+  ///   (`Cccal_CRC16`), required by the bootloader firmware of some devices
+  ///   (e.g. GoDream-based hardware).
+  final int crcTrailingZeros;
 
   /// How many times a single package may be resent (NAK / timeout /
   /// unexpected response) before the transmission is aborted.
@@ -251,6 +261,7 @@ class YModem {
       fileName,
       _source.length,
       fileMd5: fileMd5,
+      crcTrailingZeros: crcTrailingZeros,
     );
     await _sendAndWaitSuccess(
       package,
@@ -271,7 +282,12 @@ class YModem {
         _log('STEP_FILE_BODY: file data fully read');
         return;
       }
-      final package = YModemPacket.createDataPackage(buffer, read, sequence);
+      final package = YModemPacket.createDataPackage(
+        buffer,
+        read,
+        sequence,
+        crcTrailingZeros: crcTrailingZeros,
+      );
       sequence = (sequence + 1) & 0xFF;
       await _sendAndWaitSuccess(
         package,
@@ -296,7 +312,7 @@ class YModem {
   Future<void> _stepEnd() async {
     _log('STEP_END: sending the final empty package');
     await _sendAndWaitSuccess(
-      YModemPacket.createEndPackage(),
+      YModemPacket.createEndPackage(crcTrailingZeros: crcTrailingZeros),
       stepName: 'STEP_END',
       isSuccess: _isEndSuccess,
     );

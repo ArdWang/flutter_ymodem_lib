@@ -34,5 +34,15 @@ void main() {
       final bytes = Uint8List.fromList(List<int>.generate(256, (i) => i));
       expect(Crc16.calcUint8(bytes), Crc16.calc(bytes));
     });
+
+    test('trailingZeroBytes replicates the iOS YModemlib_iOS variant', () {
+      final data = utf8.encode('123456789');
+      // Two extra zero-byte iterations, like Cccal_CRC16 in YModem.c.
+      final expected = Crc16.calc([...data, 0x00, 0x00]);
+      final variant = Crc16.calc(data, trailingZeroBytes: 2);
+      expect(variant, expected);
+      // And it must differ from the standard XModem CRC.
+      expect(variant, isNot(Crc16.calc(data)));
+    });
   });
 }

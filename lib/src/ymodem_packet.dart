@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'crc16.dart';
+import 'package:flutter_ymodem_lib/src/crc16.dart';
 
 /// Utility class that encapsulates the different YModem packages.
 ///
@@ -39,8 +39,13 @@ class YModemPacket {
   static const int stC = 0x43;
 
   /// The final empty package that terminates the transmission.
-  static Uint8List createEndPackage() {
-    return createDataPackage(Uint8List(128), 128, 0x00);
+  static Uint8List createEndPackage({int crcTrailingZeros = 0}) {
+    return createDataPackage(
+      Uint8List(128),
+      128,
+      0x00,
+      crcTrailingZeros: crcTrailingZeros,
+    );
   }
 
   /// The single-byte EOT package.
@@ -55,6 +60,7 @@ class YModemPacket {
     String fileName,
     int fileByteSize, {
     String fileMd5 = '',
+    int crcTrailingZeros = 0,
   }) {
     final metadata = <int>[
       ...utf8.encode(fileName),
@@ -71,7 +77,12 @@ class YModemPacket {
     }
     final block = Uint8List(128);
     block.setRange(0, metadata.length, metadata);
-    return createDataPackage(block, 128, 0x00);
+    return createDataPackage(
+      block,
+      128,
+      0x00,
+      crcTrailingZeros: crcTrailingZeros,
+    );
   }
 
   /// Encapsulates a data package.
@@ -80,12 +91,15 @@ class YModemPacket {
   ///   accordingly (SOH / STX).
   /// * Bytes from [dataLength] to the end of [block] are filled with
   ///   [cpmEof] — note that [block] is modified in place.
-  /// * The CRC-16 of the whole block is appended big-endian.
+  /// * The CRC-16 of the whole block is appended big-endian. Set
+  ///   [crcTrailingZeros] to 2 to use the CRC variant of the iOS library
+  ///   `YModemlib_iOS` instead of the standard XModem CRC.
   static Uint8List createDataPackage(
     Uint8List block,
     int dataLength,
-    int sequence,
-  ) {
+    int sequence, {
+    int crcTrailingZeros = 0,
+  }) {
     if (block.length != 128 && block.length != 1024) {
       throw ArgumentError(
         'block length must be 128 or 1024, got ${block.length}',
@@ -101,7 +115,7 @@ class YModemPacket {
       block[i] = cpmEof;
     }
 
-    final crc = Crc16.calc(block);
+    final crc = Crc16.calc(block, trailingZeroBytes: crcTrailingZeros);
     final header = _header(sequence, headerType);
     final builder = BytesBuilder(copy: true);
     builder.add(header);

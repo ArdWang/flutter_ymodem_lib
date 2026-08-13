@@ -1,5 +1,5 @@
-import 'ymodem.dart';
-import 'ymodem_source.dart';
+import 'package:flutter_ymodem_lib/src/ymodem.dart';
+import 'package:flutter_ymodem_lib/src/ymodem_source.dart';
 
 /// The plugin class registered by `dartPluginClass` for Android, iOS,
 /// Windows, macOS and Linux.
@@ -37,6 +37,7 @@ class FlutterYModemPlugin {
     required YModemDataReady onDataReady,
     String fileMd5 = '',
     int sendSize = 1024,
+    int crcTrailingZeros = 0,
     int maxRetryTimes = 6,
     Duration packageTimeout = const Duration(seconds: 6),
     Duration responseSettleDelay = const Duration(milliseconds: 200),
@@ -51,6 +52,7 @@ class FlutterYModemPlugin {
       onDataReady: onDataReady,
       fileMd5: fileMd5,
       sendSize: sendSize,
+      crcTrailingZeros: crcTrailingZeros,
       maxRetryTimes: maxRetryTimes,
       packageTimeout: packageTimeout,
       responseSettleDelay: responseSettleDelay,

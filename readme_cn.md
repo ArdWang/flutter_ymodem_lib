@@ -16,7 +16,7 @@ Android 库 [YModemlib_Android](https://github.com/ArdWang/YModemlib_Android)
 
 ```yaml
 dependencies:
-  flutter_ymodem_lib: ^0.0.1
+  flutter_ymodem_lib: ^0.0.2
 ```
 
 ```dart
@@ -105,7 +105,8 @@ SOH 00 FF NUL[128] CRC CRC          >>>>>>>>>>>>>>>>>>>>>>
 
 - YModem 发送端完整状态机：握手、0 包（文件名/大小/MD5）、128(SOH)/
   1024(STX) 数据包、EOT、结束包、`MD5_OK`/`MD5_ERR`
-- CRC-16/XMODEM 校验（查表实现，帧内大端序）
+- CRC-16/XMODEM 校验（查表实现，帧内大端序），并可选 iOS 库
+  `YModemlib_iOS` 的 CRC 变体（`crcTrailingZeros: 2`）
 - `NAK`/超时自动重传（默认最多 6 次，可配置）、`CAN` 处理、`stop()` 终止
 - 自动处理 BLE 通知拆包（`ACK` 与 `C` 分两次到达、`MD5_OK` 文本被拆分）
 - 流式文件读取，固件无需整体载入内存
@@ -122,6 +123,7 @@ SOH 00 FF NUL[128] CRC CRC          >>>>>>>>>>>>>>>>>>>>>>
 | `onDataReady` | 必填 | 每封装好一个包回调一次，用于发送 |
 | `fileMd5` | `''` | 可选 MD5，附加在 0 包中 |
 | `sendSize` | `1024` | 数据块大小：`128`（SOH）或 `1024`（STX） |
+| `crcTrailingZeros` | `0` | CRC 变体：`0` = 标准 CRC-16/XMODEM（与 Android 库一致）；`2` = iOS 库 YModemlib_iOS 的 `Cccal_CRC16` 变体（部分设备固件要求） |
 | `maxRetryTimes` | `6` | 单个包最大重发次数 |
 | `packageTimeout` | `6 s` | 等待接收方响应的超时时间 |
 | `responseSettleDelay` | `200 ms` | 拆包响应的额外等待时间（`ACK`+`C`、`MD5_OK`） |
@@ -181,6 +183,19 @@ flutter run
 - `flutter_ymodem_lib` 插件本体：**Flutter >= 3.0 / Dart >= 2.17**。
 - 示例应用：Dart >= 3.0 / Flutter >= 3.7（受 `flutter_blue_plus` 2.3.12
   要求限制）。
+
+## 与 iOS 库 YModemlib_iOS 的差异
+
+两套原生库（Android `YModemlib_Android` / iOS `YModemlib_iOS`）是同一个
+协议的两种方言，主要差异：
+
+1. **CRC 变体**：iOS 库的 `Cccal_CRC16` 在标准 CRC-16/XMODEM 基础上多
+   迭代两次零字节。本插件默认使用 Android/标准 CRC，如果你的设备固件是
+   按 iOS 库调校的，请设置 `crcTrailingZeros: 2`。
+2. **EOT 握手**：iOS 设备在第二个 EOT 后回 `"ACK C"`（0643）而非单个
+   ACK —— 本引擎只检查首字节 ACK，两种设备都兼容。
+3. iOS 库无超时机制、无 MD5 字段、整个固件读入内存；本插件有每包超时
+   重传、流式读取，稳定性优于 iOS 库。
 
 ## 常见问题
 

@@ -17,6 +17,7 @@ class FakeReceiver {
     this.replyMd5Ok = false,
     this.silent = false,
     this.onDataFrameAcked,
+    this.crcTrailingZeros = 0,
   });
 
   /// Reply with NAK to the first data frame (forces one resend).
@@ -33,6 +34,9 @@ class FakeReceiver {
 
   /// Invoked after every successfully ACKed data frame.
   final void Function(int ackedFrames)? onDataFrameAcked;
+
+  /// The CRC variant the receiver expects (mirrors the engine option).
+  final int crcTrailingZeros;
 
   /// All file data bytes received in data frames.
   final List<int> received = <int>[];
@@ -84,7 +88,7 @@ class FakeReceiver {
     expect(data[2], (~seq) & 0xFF, reason: 'header complement mismatch');
     // Verify the CRC (big-endian).
     final payload = data.sublist(3, 3 + payloadLength);
-    final crc = Crc16.calc(payload);
+    final crc = Crc16.calc(payload, trailingZeroBytes: crcTrailingZeros);
     expect(data[3 + payloadLength], (crc >> 8) & 0xFF, reason: 'CRC hi mismatch');
     expect(data[3 + payloadLength + 1], crc & 0xFF, reason: 'CRC lo mismatch');
 
@@ -180,6 +184,7 @@ Future<TransferResult> runTransfer(
     fileName: 'test.bin',
     source: YModemBytesSource(fileBytes),
     sendSize: sendSize,
+    crcTrailingZeros: receiver.crcTrailingZeros,
     maxRetryTimes: maxRetryTimes,
     packageTimeout: packageTimeout,
     fileMd5: fileMd5,
@@ -349,6 +354,30 @@ void main() {
 
       expect(result.success, isTrue);
       expect(result.failed, isFalse);
+    });
+
+    test('supports the iOS YModemlib_iOS CRC variant (2 trailing zeros)',
+        () async {
+      final file = testFile(2500);
+      final receiver = FakeReceiver(crcTrailingZeros: 2);
+      final result = await runTransfer(file, receiver);
+
+      expect(result.success, isTrue);
+      expect(result.failed, isFalse);
+      expect(receiver.received.sublist(0, 2500), file);
+      // The frames carry the iOS CRC variant, not the standard one.
+      final dataFrame = result.sentPackages
+          .firstWhere((p) => p.length == 3 + 1024 + 2 && p[0] == YModemPacket.stx);
+      final payload = dataFrame.sublist(3, 3 + 1024);
+      expect(
+        dataFrame[3 + 1024],
+        (Crc16.calc(payload, trailingZeroBytes: 2) >> 8) & 0xFF,
+      );
+      expect(
+        Crc16.calc(payload, trailingZeroBytes: 2),
+        isNot(Crc16.calc(payload)),
+        reason: 'the iOS variant must differ from the standard CRC',
+      );
     });
 
     test('file name package contains the size and md5', () async {
