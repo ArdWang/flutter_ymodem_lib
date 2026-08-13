@@ -1,0 +1,40 @@
+name: flutter_ymodem_lib_example
+description: "Demonstrates how to use the flutter_ymodem_lib plugin to send
+  firmware to a BLE device with the YModem protocol (OTA upgrade)."
+# The example app is not meant to be published.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  # Kept as low as the dependencies allow. The plugin itself
+  # (flutter_ymodem_lib) supports Flutter >= 3.0 (Dart >= 2.17).
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  flutter_ymodem_lib:
+    path: ../
+
+  # BLE on Android / iOS / macOS / Linux / Windows (native WinRT backend).
+  flutter_blue_plus: ^2.3.12
+  # Alternative WinRT-based BLE backend for Windows used by older setups.
+  flutter_blue_plus_winrt: ^0.0.20
+
+  # Cross-platform file picking (Android, iOS, Windows, macOS, Linux).
+  file_picker: '>=6.0.0 <11.0.0'
+
+  # Path manipulation for displaying file names.
+  path: '>=1.8.0 <3.0.0'
+
+  # Runtime Bluetooth permission requests (Android 12+ / iOS).
+  permission_handler: '>=10.2.0 <14.0.0'
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: '>=2.0.0 <7.0.0'
+
+flutter:
+  uses-material-design: true

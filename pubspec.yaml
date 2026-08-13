@@ -1,0 +1,46 @@
+name: flutter_ymodem_lib
+description: >-
+  A pure Dart implementation of the YModem file transfer protocol for Flutter.
+  Works on Android, iOS, Windows, macOS and Linux without any native code,
+  ideal for BLE OTA firmware upgrades (e.g. together with flutter_blue_plus).
+version: 0.0.1
+# homepage: https://github.com/your_github/flutter_ymodem_lib
+# repository: https://github.com/your_github/flutter_ymodem_lib
+topics:
+  - ymodem
+  - ble
+  - bluetooth
+  - ota
+  - firmware
+
+environment:
+  sdk: '>=2.17.0 <4.0.0'
+  flutter: '>=3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  # A broad range so that this package can still be developed against old
+  # Flutter versions (>=3.0): pub picks the newest flutter_lints whose own
+  # SDK constraint is satisfied.
+  flutter_lints: '>=2.0.0 <7.0.0'
+
+# This is a Dart-only plugin: the whole YModem engine is implemented in pure
+# Dart, so it runs identically on every platform without any native code.
+flutter:
+  plugin:
+    platforms:
+      android:
+        dartPluginClass: FlutterYModemPlugin
+      ios:
+        dartPluginClass: FlutterYModemPlugin
+      linux:
+        dartPluginClass: FlutterYModemPlugin
+      macos:
+        dartPluginClass: FlutterYModemPlugin
+      windows:
+        dartPluginClass: FlutterYModemPlugin
